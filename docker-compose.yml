@@ -1,0 +1,53 @@
+version: '3.7'
+services:
+  app:
+    container_name: php-pdo-simple-app-dev
+    environment:
+      - COMPOSER_MEMORY_LIMIT=-1
+    image: ejklock/php-fpm:7.4
+    networks:
+      - php-pdo-simpleNetwork
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/app
+      - ./docker-compose/php-fpm/custom.ini:/usr/local/etc/php/conf.d/custom.ini
+    working_dir: /var/www/app
+  db:
+    command: --default-authentication-plugin=mysql_native_password
+    container_name: php-pdo-simple-dev-db
+    environment:
+      MYSQL_DATABASE: app
+      MYSQL_PASSWORD: app
+      MYSQL_ROOT_PASSWORD: app
+      MYSQL_USER: app
+      SERVICE_NAME: mysql
+      SERVICE_TAGS: dev
+    image: mysql:8.0
+    networks:
+      - php-pdo-simpleNetwork
+    ports:
+      - 33306:3306
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./docker-compose/mysql:/docker-entrypoint-initdb.d
+      # - php-pdo-simpleMysqlData:/var/lib/mysql
+  nginx:
+    container_name: php-pdo-simple-dev-nginx
+    image: nginx:alpine
+    networks:
+      - php-pdo-simpleNetwork
+    ports:
+      - 8000:80
+    restart: unless-stopped
+    volumes:
+      - ./:/var/www/app
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    working_dir: /var/www/app
+networks:
+  php-pdo-simpleNetwork:
+    driver: bridge
+volumes:
+  php-pdo-simpleMysqlData:
+    driver: local
+    name: php-pdo-simpleMysqlData
